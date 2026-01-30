@@ -1,0 +1,11 @@
+### 发送一个预约请求
+#POST http://localhost:8081/api/book
+GET http://localhost:8081/api/book
+#Content-Type: application/json
+#
+#{
+#  "name": "王小二",
+#  "startTime": "2026-02-10 10:00",
+#  "status": "待确认"
+#}
+
