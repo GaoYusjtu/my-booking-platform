@@ -1,28 +1,104 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh">
 <head>
-    <title>简易预约系统</title>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>极简预约系统</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        :root { --primary-color: #4a90e2; }
+        body { background-color: #f0f2f5; font-family: 'PingFang SC', sans-serif; }
+        .booking-container { max-width: 800px; margin: 40px auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
+        .date-row { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
+        .date-item { min-width: 80px; padding: 10px; border: 2px solid #f0f0f0; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; }
+        .date-item.active { border-color: var(--primary-color); background-color: #eef5ff; color: var(--primary-color); }
+        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+        .time-slot { padding: 15px; border: 1px solid #eee; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; background: #fafafa; }
+        .time-slot:hover { background: #eef5ff; border-color: var(--primary-color); }
+        .time-slot.selected { background: var(--primary-color); color: white; border-color: var(--primary-color); }
+        .btn-confirm { background: var(--primary-color); color: white; border: none; padding: 12px 30px; border-radius: 10px; width: 100%; margin-top: 25px; font-weight: bold; }
+    </style>
 </head>
 <body>
-<h2>在线预约</h2>
-<input type="text" id="name" placeholder="您的姓名"><br><br>
-<input type="datetime-local" id="time"><br><br>
-<button onclick="book()">提交预约</button>
+
+<div class="container">
+    <div class="booking-container">
+        <h4 class="text-center mb-4">📅 选择预约时段</h4>
+        
+        <div class="mb-4">
+            <input type="text" class="form-control form-control-lg" id="userName" placeholder="请输入您的姓名" style="border-radius: 12px;">
+        </div>
+
+        <div class="date-row" id="dateList"></div>
+
+        <div class="time-grid" id="timeGrid"></div>
+
+        <button class="btn-confirm" onclick="submitBooking()">立即提交预约</button>
+        <div id="statusMsg" class="text-center mt-3 small"></div>
+    </div>
+</div>
 
 <script>
-    function book() {
-        const data = {
-            name: document.getElementById('name').value,
-            startTime: document.getElementById('time').value
+    let selectedDate = "";
+    let selectedTime = "";
+
+    // 1. 自动生成未来一周的日期
+    const dateList = document.getElementById('dateList');
+    for (let i = 0; i < 7; i++) {
+        const d = new Date();
+        d.setDate(d.getDate() + i);
+        const dateStr = d.toISOString().split('T')[0];
+        const displayDate = (i === 0 ? "今天" : (d.getMonth() + 1) + "/" + d.getDate());
+        
+        const item = document.createElement('div');
+        item.className = `date-item ${i === 0 ? 'active' : ''}`;
+        if(i === 0) selectedDate = dateStr;
+        item.innerHTML = `<small>${displayDate}</small>`;
+        item.onclick = () => {
+            document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            selectedDate = dateStr;
         };
+        dateList.appendChild(item);
+    }
+
+    // 2. 生成每小时一个方框 (9:00 - 18:00)
+    const timeGrid = document.getElementById('timeGrid');
+    for (let h = 9; h <= 17; h++) {
+        const timeStr = `${h}:00 - ${h+1}:00`;
+        const slot = document.createElement('div');
+        slot.className = 'time-slot';
+        slot.innerText = timeStr;
+        slot.onclick = () => {
+            document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
+            slot.classList.add('selected');
+            selectedTime = timeStr;
+        };
+        timeGrid.appendChild(slot);
+    }
+
+    // 3. 提交请求
+    function submitBooking() {
+        const name = document.getElementById('userName').value;
+        const msgBox = document.getElementById('statusMsg');
+        
+        if (!name || !selectedTime) {
+            alert("请完整填写姓名并选择时间");
+            return;
+        }
+
+        const fullTime = `${selectedDate} ${selectedTime}`;
+        
         fetch('/api/book', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify(data)
+            body: JSON.stringify({ name: name, startTime: fullTime })
         })
-            .then(res => res.text())
-            .then(msg => alert(msg));
+        .then(res => res.text())
+        .then(text => {
+            msgBox.innerText = text;
+            msgBox.className = text.includes("成功") ? "text-success" : "text-danger";
+        });
     }
 </script>
 </body>
