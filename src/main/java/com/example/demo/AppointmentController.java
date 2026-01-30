@@ -1,0 +1,34 @@
+package com.example.demo;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.*;
+import java.util.List;
+
+@RestController
+@RequestMapping("/api/book")
+public class AppointmentController {
+
+    @Autowired // 自动注入刚才创建的仓库
+    private AppointmentRepository appointmentRepository;
+
+    // 1. 提交预约并存入数据库
+    @PostMapping
+    public String makeAppointment(@RequestBody Appointment appointment) {
+        // 检查冲突逻辑
+        List<Appointment> existing = appointmentRepository.findByStartTime(appointment.getStartTime());
+
+        if (!existing.isEmpty()) {
+            return "预约失败：该时段已被占用！";
+        }
+
+        appointmentRepository.save(appointment);
+        // 这里的返回类型必须和方法定义的 String 对应
+        return "预约成功！预约人是：" + appointment.getName();
+    }
+
+    // 2. 新增一个接口：查看所有预约
+    @GetMapping
+    public List<Appointment> getAllAppointments() {
+        return appointmentRepository.findAll();
+    }
+}
