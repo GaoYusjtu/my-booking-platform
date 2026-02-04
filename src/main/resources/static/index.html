@@ -3,83 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>预约系统</title>
+    <title>预约系统 - iOS 26 Pro</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        :root { --ios-blue: #007AFF; --ios-bg: #F2F2F7; }
-        body { background-color: var(--ios-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 100px; }
-        
-        /* 页面切换逻辑 */
-        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
-        .page.active { display: block; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-
-        /* iOS 风格容器 */
-        .ios-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
-        
-        /* 底部导航栏 (iOS 26 风格) */
-        .ios-nav {
-            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-            width: 90%; max-width: 400px; height: 65px;
-            background: rgba(255, 255, 255, 0.8);
-            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
-            border-radius: 30px; display: flex; justify-content: space-around; align-items: center;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3); z-index: 1000;
+        :root { 
+            --ios-blue: #007AFF; 
+            --glass-bg: rgba(255, 255, 255, 0.45);
+            --liquid-blur: blur(25px);
         }
-        .nav-item { text-align: center; color: #8E8E93; cursor: pointer; transition: 0.2s; flex: 1; }
-        .nav-item.active { color: var(--ios-blue); }
-        .nav-item i { font-size: 22px; display: block; }
-        .nav-item span { font-size: 10px; font-weight: 500; }
+        
+        body { 
+            background: linear-gradient(135deg, #e0eafc 0%, #cfdef3 100%); 
+            background-attachment: fixed;
+            font-family: -apple-system, sans-serif;
+            padding-bottom: 120px;
+            color: #1d1d1f;
+        }
 
-        /* 预约格样式优化 */
-        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
-        .time-slot { padding: 10px; border-radius: 12px; border: 1px solid #E5E5EA; text-align: center; background: #fff; cursor: pointer; transition: 0.2s; }
-        .time-slot.selected { background: var(--ios-blue); color: white; border-color: var(--ios-blue); }
-        .time-slot.disabled { background: #E5E5EA; color: #AEAEB2; cursor: not-allowed; }
+        /* 液态玻璃卡片效果 */
+        .glass-card {
+            background: var(--glass-bg);
+            backdrop-filter: var(--liquid-blur);
+            -webkit-backdrop-filter: var(--liquid-blur);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.07);
+            margin-bottom: 20px;
+        }
 
-        /* 列表样式 */
-        .list-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #F2F2F7; }
-        .list-item:last-child { border-bottom: none; }
+        .page { display: none; padding: 20px; animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .page.active { display: block; }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 修复后的日期行 */
+        .date-row { 
+            display: flex; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            gap: 12px; 
+            padding: 8px 2px;
+            align-items: center; /* 确保垂直居中 */
+            -webkit-overflow-scrolling: touch;
+        }
+        .date-row::-webkit-scrollbar { display: none; }
+        
+        .date-btn {
+            flex: 0 0 auto; /* 防止被压缩 */
+            padding: 10px 18px;
+            border-radius: 14px;
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            font-size: 14px;
+            font-weight: 500;
+            transition: 0.3s;
+        }
+        .date-btn.active { background: var(--ios-blue); color: white; box-shadow: 0 4px 12px rgba(0,122,255,0.3); }
+
+        /* 底部导航栏 */
+        .ios-nav {
+            position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%);
+            width: 85%; max-width: 380px; height: 70px;
+            background: rgba(255, 255, 255, 0.6);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 35px; display: flex; justify-content: space-around; align-items: center;
+            border: 1px solid rgba(255, 255, 255, 0.4); z-index: 1000;
+        }
+        .nav-item { text-align: center; color: #8E8E93; flex: 1; transition: 0.3s; }
+        .nav-item.active { color: var(--ios-blue); transform: scale(1.1); }
+        .nav-item i { font-size: 24px; }
+        .nav-item span { font-size: 11px; font-weight: 500; display: block; }
+
+        .time-slot { 
+            background: rgba(255,255,255,0.5); border: 1px solid rgba(255,255,255,0.2); 
+            border-radius: 16px; padding: 12px; text-align: center; transition: 0.2s;
+        }
+        .time-slot.selected { background: var(--ios-blue) !important; color: white; }
     </style>
 </head>
 <body>
 
-<div id="page-book" class="page active">
-    <h3 class="fw-bold mb-4">新建预约</h3>
-    <div class="ios-card">
-        <div class="mb-3"><input type="text" class="form-control" id="userName" placeholder="姓名"></div>
-        <div class="mb-3"><input type="text" class="form-control" id="studentId" placeholder="学号"></div>
-        <div class="date-row d-flex overflow-auto gap-2 mb-3 pb-2" id="dateList"></div>
-        <div class="time-grid" id="timeGrid"></div>
-        <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" style="border-radius: 12px;" onclick="submitBooking()">提交预约</button>
+<div class="container">
+    <div id="page-book" class="page active">
+        <h2 class="fw-bold mb-4">创建预约</h2>
+        <div class="glass-card">
+            <div class="mb-3"><input type="text" class="form-control" id="userName" placeholder="您的姓名"></div>
+            <div class="mb-4"><input type="text" class="form-control" id="studentId" placeholder="您的学号"></div>
+            <p class="small text-muted mb-2">选择日期</p>
+            <div class="date-row" id="dateList"></div>
+            <p class="small text-muted mt-4 mb-2">选择时间段</p>
+            <div class="time-grid row g-2" id="timeGrid"></div>
+            <button class="btn btn-primary w-100 mt-4 py-3 fw-bold shadow-sm" style="border-radius: 18px;" onclick="submitBooking()">立即预约</button>
+        </div>
+    </div>
+
+    <div id="page-query" class="page">
+        <h2 class="fw-bold mb-4">记录查询</h2>
+        <div class="glass-card">
+            <div class="mb-3"><input type="text" class="form-control" id="qName" placeholder="输入姓名"></div>
+            <div class="mb-3"><input type="text" class="form-control" id="qSid" placeholder="输入学号"></div>
+            <button class="btn btn-dark w-100 py-2 mb-4" style="border-radius: 12px;" onclick="verifyAndLoad()">查询我的记录</button>
+            <div id="appointmentList"></div>
+        </div>
+    </div>
+
+    <div id="page-rank" class="page">
+        <h2 class="fw-bold mb-4">活跃排行</h2>
+        <div class="glass-card">
+            <canvas id="statsChart" style="height: 350px;"></canvas>
+        </div>
     </div>
 </div>
 
-<div id="page-query" class="page">
-    <h3 class="fw-bold mb-4">预约记录</h3>
-    <div class="ios-card">
-        <div id="appointmentList">加载中...</div>
-    </div>
-</div>
-
-<div id="page-rank" class="page">
-    <h3 class="fw-bold mb-4">预约排行</h3>
-    <div class="ios-card">
-        <canvas id="statsChart" style="height: 300px;"></canvas>
-    </div>
-</div>
-
-<nav class="ios-nav">
-    <div class="nav-item active" onclick="switchPage('book')">
-        <i class="bi bi-calendar-plus"></i><span>预约</span>
-    </div>
-    <div class="nav-item" onclick="switchPage('query')">
-        <i class="bi bi-list-ul"></i><span>查询</span>
-    </div>
-    <div class="nav-item" onclick="switchPage('rank')">
-        <i class="bi bi-bar-chart-fill"></i><span>排行</span>
-    </div>
+<nav class="ios-nav shadow">
+    <div class="nav-item active" onclick="switchPage('book')"><i class="bi bi-plus-circle-fill"></i><span>预约</span></div>
+    <div class="nav-item" onclick="switchPage('query')"><i class="bi bi-search"></i><span>查询</span></div>
+    <div class="nav-item" onclick="switchPage('rank')"><i class="bi bi-trophy-fill"></i><span>排行</span></div>
 </nav>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
@@ -89,86 +129,88 @@
     let selectedDate = "";
     let selectedTime = "";
 
-    // 页面切换
     function switchPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
         document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-        
         document.getElementById(`page-${pageId}`).classList.add('active');
         event.currentTarget.classList.add('active');
-
-        if(pageId === 'query') loadAppointments();
         if(pageId === 'rank') renderChart();
         if(pageId === 'book') renderTimeSlots();
     }
 
-    // 初始化日期
+    // 初始化日期 - 确保单行居中
     const dateList = document.getElementById('dateList');
     for (let i = 0; i < 7; i++) {
-        const d = new Date();
-        d.setDate(d.getDate() + i);
+        const d = new Date(); d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
         const btn = document.createElement('div');
-        btn.className = `btn btn-sm ${i===0?'btn-primary':'btn-light'}`;
+        btn.className = `date-btn ${i===0?'active':''}`;
         btn.innerText = i === 0 ? "今天" : (d.getMonth()+1)+"/"+d.getDate();
         if(i===0) selectedDate = dateStr;
         btn.onclick = (e) => {
-            document.querySelectorAll('#dateList .btn').forEach(b => {b.classList.remove('btn-primary'); b.classList.add('btn-light')});
-            e.target.classList.replace('btn-light', 'btn-primary');
+            document.querySelectorAll('.date-btn').forEach(b => b.classList.remove('active'));
+            e.target.classList.add('active');
             selectedDate = dateStr;
             renderTimeSlots();
         };
         dateList.appendChild(btn);
     }
 
-    // 加载名额
     async function renderTimeSlots() {
         const grid = document.getElementById('timeGrid');
-        grid.innerHTML = "加载中...";
         const res = await fetch(`/api/book/daily-capacity?date=${selectedDate}`);
         const data = await res.json();
         grid.innerHTML = "";
         for (let h = 9; h <= 17; h++) {
             const t = `${h}:00 - ${h+1}:00`;
             const rem = data[t];
-            const slot = document.createElement('div');
-            slot.className = `time-slot ${rem<=0?'disabled':''}`;
-            slot.innerHTML = `<strong>${t}</strong><br><small>剩余:${rem}</small>`;
-            if(rem > 0) slot.onclick = () => {
+            const col = document.createElement('div');
+            col.className = 'col-4';
+            col.innerHTML = `<div class="time-slot ${rem<=0?'disabled':''}" id="t-${h}">
+                <small>${t}</small><br><strong>${rem}</strong>
+            </div>`;
+            if(rem > 0) col.onclick = () => {
                 document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
-                slot.classList.add('selected');
+                document.getElementById(`t-${h}`).classList.add('selected');
                 selectedTime = t;
             };
-            grid.appendChild(slot);
+            grid.appendChild(col);
         }
     }
 
-    // 提交
+    function verifyAndLoad() {
+        const name = document.getElementById('qName').value;
+        const sid = document.getElementById('qSid').value;
+        const list = document.getElementById('appointmentList');
+        if(!name || !sid) return alert("请输入完整信息");
+        
+        fetch('/api/book').then(res => res.json()).then(data => {
+            // 过滤该用户的记录
+            const myRecords = data.filter(a => a.name === name && a.studentId === sid);
+            if(myRecords.length === 0) {
+                list.innerHTML = "<p class='text-center text-muted'>未找到您的预约记录</p>";
+            } else {
+                list.innerHTML = myRecords.map(a => `
+                    <div class="d-flex justify-content-between p-3 mb-2 bg-white rounded-3 shadow-sm">
+                        <span>${a.startTime}</span>
+                        <span class="badge bg-success">预约成功</span>
+                    </div>
+                `).join('');
+            }
+        });
+    }
+
     function submitBooking() {
         const name = document.getElementById('userName').value;
         const sid = document.getElementById('studentId').value;
-        if(!name || !sid || !selectedTime) return alert("请填写完整信息");
+        if(!name || !sid || !selectedTime) return alert("请填写完整");
         fetch('/api/book', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({name, studentId: sid, startTime: `${selectedDate} ${selectedTime}`})
-        }).then(() => { alert("预约成功！"); location.reload(); });
+        }).then(() => { alert("预约成功！"); switchPage('query'); });
     }
 
-    // 加载记录
-    function loadAppointments() {
-        const list = document.getElementById('appointmentList');
-        fetch('/api/book').then(res => res.json()).then(data => {
-            list.innerHTML = data.map(a => `
-                <div class="list-item">
-                    <div><strong>${a.name}</strong><br><small class="text-muted">${a.studentId}</small></div>
-                    <div class="text-end"><span class="badge bg-primary">${a.startTime}</span></div>
-                </div>
-            `).join('') || "暂无预约记录";
-        });
-    }
-
-    // 排行榜
     let myChart = null;
     function renderChart() {
         fetch('/api/book/stats').then(res => res.json()).then(data => {
@@ -179,12 +221,12 @@
                 type: 'bar',
                 data: {
                     labels: data.map(d => d[0]),
-                    datasets: [{ data: data.map(d => d[1]), backgroundColor: '#007AFF', borderRadius: 10 }]
+                    datasets: [{ data: data.map(d => d[1]), backgroundColor: 'rgba(0,122,255,0.6)', borderRadius: 12 }]
                 },
                 options: {
                     indexAxis: 'y',
-                    plugins: { legend: {display: false}, datalabels: { align: 'right', anchor: 'end', color: '#007AFF' } },
-                    scales: { x: { display: false }, y: { grid: { display: false }, border: {display: false} } }
+                    plugins: { legend: {display: false}, datalabels: { align: 'right', anchor: 'end', color: '#007AFF', font: {weight: 'bold'} } },
+                    scales: { x: { display: false }, y: { grid: { display: false }, border: {display: false}, ticks: { color: '#1d1d1f' } } }
                 }
             });
         });
