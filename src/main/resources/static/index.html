@@ -2,42 +2,85 @@
 <html lang="zh">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>极简预约系统 - 极速版</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>预约系统</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
     <style>
-        :root { --primary-color: #4a90e2; }
-        body { background-color: #f0f2f5; font-family: 'PingFang SC', sans-serif; padding-bottom: 50px; }
-        .booking-container { max-width: 800px; margin: 20px auto; background: white; border-radius: 20px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-        .date-row { display: flex; overflow-x: auto; gap: 10px; padding-bottom: 15px; margin-bottom: 20px; border-bottom: 1px solid #eee; }
-        .date-item { min-width: 80px; padding: 10px; border: 2px solid #f0f0f0; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; }
-        .date-item.active { border-color: var(--primary-color); background-color: #eef5ff; color: var(--primary-color); }
-        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 12px; }
-        .time-slot { padding: 12px; border: 1px solid #eee; border-radius: 10px; text-align: center; cursor: pointer; transition: 0.2s; background: #fafafa; }
-        .time-slot.selected { background: var(--primary-color) !important; color: white !important; }
-        .time-slot.disabled { background: #f5f5f5; color: #ccc; cursor: not-allowed; opacity: 0.6; }
-        .btn-confirm { background: var(--primary-color); color: white; border: none; padding: 12px 30px; border-radius: 10px; width: 100%; margin-top: 25px; font-weight: bold; }
+        :root { --ios-blue: #007AFF; --ios-bg: #F2F2F7; }
+        body { background-color: var(--ios-bg); font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; padding-bottom: 100px; }
+        
+        /* 页面切换逻辑 */
+        .page { display: none; padding: 20px; animation: fadeIn 0.3s ease; }
+        .page.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* iOS 风格容器 */
+        .ios-card { background: white; border-radius: 15px; padding: 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 20px; }
+        
+        /* 底部导航栏 (iOS 26 风格) */
+        .ios-nav {
+            position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 400px; height: 65px;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border-radius: 30px; display: flex; justify-content: space-around; align-items: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border: 1px solid rgba(255,255,255,0.3); z-index: 1000;
+        }
+        .nav-item { text-align: center; color: #8E8E93; cursor: pointer; transition: 0.2s; flex: 1; }
+        .nav-item.active { color: var(--ios-blue); }
+        .nav-item i { font-size: 22px; display: block; }
+        .nav-item span { font-size: 10px; font-weight: 500; }
+
+        /* 预约格样式优化 */
+        .time-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .time-slot { padding: 10px; border-radius: 12px; border: 1px solid #E5E5EA; text-align: center; background: #fff; cursor: pointer; transition: 0.2s; }
+        .time-slot.selected { background: var(--ios-blue); color: white; border-color: var(--ios-blue); }
+        .time-slot.disabled { background: #E5E5EA; color: #AEAEB2; cursor: not-allowed; }
+
+        /* 列表样式 */
+        .list-item { display: flex; justify-content: space-between; padding: 15px 0; border-bottom: 1px solid #F2F2F7; }
+        .list-item:last-child { border-bottom: none; }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="booking-container">
-        <h4 class="text-center mb-4">📅 快速预约</h4>
-        <div class="row g-2 mb-4">
-            <div class="col-6"><input type="text" class="form-control" id="userName" placeholder="姓名"></div>
-            <div class="col-6"><input type="text" class="form-control" id="studentId" placeholder="学号"></div>
-        </div>
-        <div class="date-row" id="dateList"></div>
+<div id="page-book" class="page active">
+    <h3 class="fw-bold mb-4">新建预约</h3>
+    <div class="ios-card">
+        <div class="mb-3"><input type="text" class="form-control" id="userName" placeholder="姓名"></div>
+        <div class="mb-3"><input type="text" class="form-control" id="studentId" placeholder="学号"></div>
+        <div class="date-row d-flex overflow-auto gap-2 mb-3 pb-2" id="dateList"></div>
         <div class="time-grid" id="timeGrid"></div>
-        <button class="btn-confirm" onclick="submitBooking()">提交预约</button>
-    </div>
-
-    <div class="booking-container">
-        <h5 class="mb-3">🏆 预约达人 (次数)</h5>
-        <div style="height: 250px;"><canvas id="statsChart"></canvas></div>
+        <button class="btn btn-primary w-100 mt-4 py-3 fw-bold" style="border-radius: 12px;" onclick="submitBooking()">提交预约</button>
     </div>
 </div>
+
+<div id="page-query" class="page">
+    <h3 class="fw-bold mb-4">预约记录</h3>
+    <div class="ios-card">
+        <div id="appointmentList">加载中...</div>
+    </div>
+</div>
+
+<div id="page-rank" class="page">
+    <h3 class="fw-bold mb-4">预约排行</h3>
+    <div class="ios-card">
+        <canvas id="statsChart" style="height: 300px;"></canvas>
+    </div>
+</div>
+
+<nav class="ios-nav">
+    <div class="nav-item active" onclick="switchPage('book')">
+        <i class="bi bi-calendar-plus"></i><span>预约</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('query')">
+        <i class="bi bi-list-ul"></i><span>查询</span>
+    </div>
+    <div class="nav-item" onclick="switchPage('rank')">
+        <i class="bi bi-bar-chart-fill"></i><span>排行</span>
+    </div>
+</nav>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -46,113 +89,108 @@
     let selectedDate = "";
     let selectedTime = "";
 
-    // 1. 初始化日期
+    // 页面切换
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+        
+        document.getElementById(`page-${pageId}`).classList.add('active');
+        event.currentTarget.classList.add('active');
+
+        if(pageId === 'query') loadAppointments();
+        if(pageId === 'rank') renderChart();
+        if(pageId === 'book') renderTimeSlots();
+    }
+
+    // 初始化日期
     const dateList = document.getElementById('dateList');
     for (let i = 0; i < 7; i++) {
         const d = new Date();
         d.setDate(d.getDate() + i);
         const dateStr = d.toISOString().split('T')[0];
-        const item = document.createElement('div');
-        item.className = `date-item ${i === 0 ? 'active' : ''}`;
-        if(i === 0) selectedDate = dateStr;
-        item.innerHTML = `<small>${i === 0 ? "今天" : (d.getMonth() + 1) + "/" + d.getDate()}</small>`;
-        item.onclick = () => {
-            document.querySelectorAll('.date-item').forEach(el => el.classList.remove('active'));
-            item.classList.add('active');
+        const btn = document.createElement('div');
+        btn.className = `btn btn-sm ${i===0?'btn-primary':'btn-light'}`;
+        btn.innerText = i === 0 ? "今天" : (d.getMonth()+1)+"/"+d.getDate();
+        if(i===0) selectedDate = dateStr;
+        btn.onclick = (e) => {
+            document.querySelectorAll('#dateList .btn').forEach(b => {b.classList.remove('btn-primary'); b.classList.add('btn-light')});
+            e.target.classList.replace('btn-light', 'btn-primary');
             selectedDate = dateStr;
             renderTimeSlots();
         };
-        dateList.appendChild(item);
+        dateList.appendChild(btn);
     }
 
-    // 2. 优化后的时间段渲染（单次请求，性能提升 90%）
+    // 加载名额
     async function renderTimeSlots() {
-        const timeGrid = document.getElementById('timeGrid');
-        timeGrid.innerHTML = "加载中...";
-        
-        try {
-            // 请求当天的全量名额数据
-            const response = await fetch(`/api/book/daily-capacity?date=${selectedDate}`);
-            const capacityMap = await response.json();
-            
-            timeGrid.innerHTML = "";
-            for (let h = 9; h <= 17; h++) {
-                const timeStr = `${h}:00 - ${h+1}:00`;
-                const remaining = capacityMap[timeStr];
-                
-                const div = document.createElement('div');
-                div.className = `time-slot ${remaining <= 0 ? 'disabled' : ''}`;
-                div.innerHTML = `<div>${timeStr}</div><small style="font-size:10px">剩余: ${remaining}</small>`;
-                
-                if (remaining > 0) {
-                    div.onclick = () => {
-                        document.querySelectorAll('.time-slot').forEach(el => el.classList.remove('selected'));
-                        div.classList.add('selected');
-                        selectedTime = timeStr;
-                    };
-                }
-                timeGrid.appendChild(div);
-            }
-        } catch (e) { timeGrid.innerHTML = "加载失败"; }
+        const grid = document.getElementById('timeGrid');
+        grid.innerHTML = "加载中...";
+        const res = await fetch(`/api/book/daily-capacity?date=${selectedDate}`);
+        const data = await res.json();
+        grid.innerHTML = "";
+        for (let h = 9; h <= 17; h++) {
+            const t = `${h}:00 - ${h+1}:00`;
+            const rem = data[t];
+            const slot = document.createElement('div');
+            slot.className = `time-slot ${rem<=0?'disabled':''}`;
+            slot.innerHTML = `<strong>${t}</strong><br><small>剩余:${rem}</small>`;
+            if(rem > 0) slot.onclick = () => {
+                document.querySelectorAll('.time-slot').forEach(s => s.classList.remove('selected'));
+                slot.classList.add('selected');
+                selectedTime = t;
+            };
+            grid.appendChild(slot);
+        }
     }
 
-    // 3. 提交预约
+    // 提交
     function submitBooking() {
         const name = document.getElementById('userName').value;
         const sid = document.getElementById('studentId').value;
-        if (!name || !sid || !selectedTime) return alert("请完整填写");
-
+        if(!name || !sid || !selectedTime) return alert("请填写完整信息");
         fetch('/api/book', {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
-            body: JSON.stringify({ name, studentId: sid, startTime: `${selectedDate} ${selectedTime}` })
-        }).then(res => res.text()).then(text => {
-            alert(text);
-            location.reload();
+            body: JSON.stringify({name, studentId: sid, startTime: `${selectedDate} ${selectedTime}`})
+        }).then(() => { alert("预约成功！"); location.reload(); });
+    }
+
+    // 加载记录
+    function loadAppointments() {
+        const list = document.getElementById('appointmentList');
+        fetch('/api/book').then(res => res.json()).then(data => {
+            list.innerHTML = data.map(a => `
+                <div class="list-item">
+                    <div><strong>${a.name}</strong><br><small class="text-muted">${a.studentId}</small></div>
+                    <div class="text-end"><span class="badge bg-primary">${a.startTime}</span></div>
+                </div>
+            `).join('') || "暂无预约记录";
         });
     }
 
-    // 4. 水平柱状图优化
+    // 排行榜
+    let myChart = null;
     function renderChart() {
         fetch('/api/book/stats').then(res => res.json()).then(data => {
-            Chart.register(ChartDataLabels); // 注册插件
-            new Chart(document.getElementById('statsChart'), {
+            const ctx = document.getElementById('statsChart');
+            if(myChart) myChart.destroy();
+            Chart.register(ChartDataLabels);
+            myChart = new Chart(ctx, {
                 type: 'bar',
                 data: {
                     labels: data.map(d => d[0]),
-                    datasets: [{
-                        data: data.map(d => d[1]),
-                        backgroundColor: '#4a90e2',
-                        borderRadius: 20,
-                        barThickness: 20
-                    }]
+                    datasets: [{ data: data.map(d => d[1]), backgroundColor: '#007AFF', borderRadius: 10 }]
                 },
                 options: {
-                    indexAxis: 'y', // 改为水平柱状图
-                    plugins: {
-                        legend: { display: false },
-                        datalabels: { // 在柱子边显示数字
-                            anchor: 'end',
-                            align: 'right',
-                            color: '#4a90e2',
-                            font: { weight: 'bold' }
-                        }
-                    },
-                    scales: {
-                        x: { display: false }, // 隐藏 X 轴
-                        y: { 
-                            display: true, 
-                            grid: { display: false }, // 隐藏 Y 轴网格线
-                            border: { display: false } // 隐藏 Y 轴边框线
-                        }
-                    }
+                    indexAxis: 'y',
+                    plugins: { legend: {display: false}, datalabels: { align: 'right', anchor: 'end', color: '#007AFF' } },
+                    scales: { x: { display: false }, y: { grid: { display: false }, border: {display: false} } }
                 }
             });
         });
     }
 
     renderTimeSlots();
-    renderChart();
 </script>
 </body>
 </html>
