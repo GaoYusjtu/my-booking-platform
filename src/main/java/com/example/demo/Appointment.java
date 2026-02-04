@@ -9,6 +9,8 @@ public class Appointment {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
     private String name;      // 预约人
+    private String studentId;
     private String startTime; // 预约开始时间
     private String status;    // 状态：已预约/已完成
 }
+
