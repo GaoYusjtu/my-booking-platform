@@ -43,5 +43,22 @@ public class AppointmentController {
     public List<Appointment> getAllAppointments() {
         return appointmentRepository.findAll();
     }
+    @GetMapping("/daily-capacity")
+    public Map<String, Integer> getDailyCapacity(@RequestParam String date) {
+    // 查找当天所有的预约
+        List<Appointment> dayAppointments = appointmentRepository.findAll().stream()
+                .filter(a -> a.getStartTime().startsWith(date))
+                .collect(Collectors.toList());
 
+        Map<String, Integer> result = new HashMap<>();
+        for (int h = 9; h <= 17; h++) {
+            String timeStr = h + ":00 - " + (h + 1) + ":00";
+            long count = dayAppointments.stream()
+                    .filter(a -> a.getStartTime().contains(timeStr))
+                    .count();
+        result.put(timeStr, Math.max(0, MAX_CAPACITY - (int)count));
+        }
+        return result; // 返回格式如 {"9:00 - 10:00": 3, "10:00 - 11:00": 2}
+    }
 }
+
