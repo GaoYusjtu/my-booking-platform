@@ -3,6 +3,9 @@ package com.example.demo;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/book")
@@ -61,4 +64,5 @@ public class AppointmentController {
         return result; // 返回格式如 {"9:00 - 10:00": 3, "10:00 - 11:00": 2}
     }
 }
+
 
